@@ -2,7 +2,7 @@
 # vim-coloredit
 
 This plugin provides to edit `#rrggbb`, `rgb(rr,gg,bb)` or `rgba(rr,gg,bb,aa)`.
-When you edit "rgba(rr,gg,bb,aa)", This plugin can not support to edit the alpha value.
+When you edit `rgba(rr,gg,bb,aa)`, This plugin can not support to edit the alpha value.
 
 ## Usage
 
