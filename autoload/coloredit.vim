@@ -178,7 +178,7 @@ function! coloredit#exec() abort
         call win_execute(winid, 'setfiletype coloredit')
     else
         echohl Error
-        echo printf('[%s] please position the cursor on "#rrggbb" or "rgb(rr,gg,bb)" or "rgba(rr,gg,bb,aa)"', s:pluginname)
+        echo printf('[%s] please position the cursor on "#rrggbb", "rgb(rr,gg,bb)" or "rgba(rr,gg,bb,aa)"', s:pluginname)
         echohl None
     endif
 endfunction
