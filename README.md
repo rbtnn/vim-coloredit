@@ -11,6 +11,11 @@ And this plugin provides to switch to complementary color and reverse color.
 
 ![](https://raw.githubusercontent.com/rbtnn/vim-coloredit/master/coloredit.gif)
 
+## Requirements
+
+* Vim 8.1 or above
+* Enable `+textprop` feature
+
 ## License
 
 Distributed under MIT License. See LICENSE.
