@@ -14,7 +14,7 @@ And this plugin provides to switch to complementary color and reverse color.
 ## Requirements
 
 * Vim 8.1 or above
-* Enable `+textprop` feature
+* Vim must be compiled with `+textprop` feature
 
 ## License
 
