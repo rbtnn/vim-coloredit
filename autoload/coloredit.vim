@@ -162,7 +162,11 @@ function! coloredit#exec() abort
                 \   s:makeline('R', info.red),
                 \   s:makeline('G', info.green),
                 \   s:makeline('B', info.blue),
-                \ ] + (empty(info.alpha) ? [] : [(s:makeline('A', info.alpha))]), {
+                \ ]
+                \ + (empty(info.alpha) ? [''] : [(s:makeline('A', info.alpha))])
+                \ + ['switch to complementary color']
+                \ + ['switch to reverse color']
+                \ , {
                 \   'title' : s:pluginname,
                 \   'pos' : 'center',
                 \   'close' : 'button',
@@ -234,19 +238,55 @@ function! coloredit#filter(winid, key) abort
     let lines = getbufline(bnr, 1, '$')
     if a:key == 'j'
         let lnum += 1
-        if (1 < lnum) && (lnum <= 4)
+        if ((1 < lnum) && (lnum <= 4)) || (lnum == 7)
             call setbufvar(bnr, 'lnum', lnum)
+        elseif lnum == 5
+            let lnum += 1
+            call win_execute(a:winid, printf('call setpos(".", [0, %d, 1, 0])', lnum))
+            call setbufvar(bnr, 'lnum', lnum)
+            return 1
         else
             return 1
         endif
     endif
     if a:key == 'k'
         let lnum -= 1
-        if (1 < lnum) && (lnum <= 4)
+        if ((1 < lnum) && (lnum <= 4)) || (lnum == 6)
             call setbufvar(bnr, 'lnum', lnum)
+        elseif lnum == 5
+            let lnum -= 1
+            call win_execute(a:winid, printf('call setpos(".", [0, %d, 1, 0])', lnum))
+            call setbufvar(bnr, 'lnum', lnum)
+            return 1
         else
             return 1
         endif
+    endif
+    if ((a:key == 'h') || (a:key == 'l')) && (lnum == 6)
+        let r_xs = split(lines[2 - 1], s:delimiter)
+        let r = str2nr(r_xs[1])
+        let g_xs = split(lines[3 - 1], s:delimiter)
+        let g = str2nr(g_xs[1])
+        let b_xs = split(lines[4 - 1], s:delimiter)
+        let b = str2nr(b_xs[1])
+        call s:setline(bnr, 2, r_xs, max([r, g, b]) + min([r, g, b]) - r)
+        call s:setline(bnr, 3, g_xs, max([r, g, b]) + min([r, g, b]) - g)
+        call s:setline(bnr, 4, b_xs, max([r, g, b]) + min([r, g, b]) - b)
+        call coloredit#set_color_on_firstline(a:winid)
+        return 1
+    endif
+    if ((a:key == 'h') || (a:key == 'l')) && (lnum == 7)
+        let r_xs = split(lines[2 - 1], s:delimiter)
+        let r = str2nr(r_xs[1])
+        let g_xs = split(lines[3 - 1], s:delimiter)
+        let g = str2nr(g_xs[1])
+        let b_xs = split(lines[4 - 1], s:delimiter)
+        let b = str2nr(b_xs[1])
+        call s:setline(bnr, 2, r_xs, 255 - r)
+        call s:setline(bnr, 3, g_xs, 255 - g)
+        call s:setline(bnr, 4, b_xs, 255 - b)
+        call coloredit#set_color_on_firstline(a:winid)
+        return 1
     endif
     if (a:key == 'h') && (1 < lnum) && (lnum <= 4)
         let xs = split(lines[lnum - 1], s:delimiter)

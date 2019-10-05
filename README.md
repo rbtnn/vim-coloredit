@@ -3,6 +3,7 @@
 
 This plugin provides to edit "#rrggbb" or "rgb(rr,gg,bb)" or "rgba(rr,gg,bb,aa)".
 When you edit "rgba(rr,gg,bb,aa)", you can not edit alpha value.
+And this plugin provides to switch to complementary color and reverse color.
 
 ## Usage
 
