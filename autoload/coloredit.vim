@@ -9,126 +9,150 @@ let s:pluginname = 'ColorEdit'
 let s:delimiter = '|'
 let s:info = 0
 
-function! s:hash_rbg() abort
+function! s:col2idx(cs, col) abort
+    let i = 0
+    let total = a:col
+    for c in a:cs
+        let total -= len(c)
+        if 0 < total
+            let i += 1
+        else
+            break
+        endif
+    endfor
+    return i
+endfunction
+
+function! s:split3(cs, s, e) abort
+    let cs = a:cs
+    let s = a:s
+    let e = a:e
+    let s1 = (0 < a:s) ? join(cs[:(s - 1)], '') : ''
+    let s2 = join(cs[(s):(e)], '')
+    let s3 = join(cs[(e + 1):], '')
+    return [s1, s2, s3]
+endfunction
+
+function! s:hash_rgb() abort
     let cs = split(getline('.'), '\zs')
-    let i = col('.') - 1
+    let i = s:col2idx(cs, col('.'))
     let s = i
     let e = i
-    let target = ''
-    if cs[i] =~# '^[#a-fA-F0-9]$'
-        while 0 <= s - 1
-            if cs[s - 1] =~# '^[#a-fA-F0-9]$'
+    if 0 < len(cs)
+        if cs[i] =~# '^[#a-fA-F0-9]$'
+            while 0 <= s - 1
+                if cs[s - 1] =~# '^[#a-fA-F0-9]$'
+                    let s -= 1
+                else
+                    break
+                endif
+            endwhile
+            while e + 1 < len(cs)
+                if cs[e + 1] =~# '^[#a-fA-F0-9]$'
+                    let e += 1
+                else
+                    break
+                endif
+            endwhile
+            let ss = s:split3(cs, s, e)
+            let regex = '^#\([a-fA-F0-9][a-fA-F0-9]\)\([a-fA-F0-9][a-fA-F0-9]\)\([a-fA-F0-9][a-fA-F0-9]\)$'
+            let m = matchlist(ss[1], regex)
+            if !empty(m)
+                return {
+                        \ 'type' : 'hash_rgb',
+                        \ 'ss' : ss,
+                        \ 'red' : str2nr(m[1], 16),
+                        \ 'green' : str2nr(m[2], 16),
+                        \ 'blue' : str2nr(m[3], 16),
+                        \ 'alpha' : '',
+                        \ }
+            endif
+        endif
+    endif
+    return {}
+endfunction
+
+function! s:paren_rgb() abort
+    let cs = split(getline('.'), '\zs')
+    let i = s:col2idx(cs, col('.'))
+    let s = i
+    let e = i
+    if 0 < len(cs)
+        while 0 <= s
+            if (cs[s] == 'r') || (cs[s] == 'R')
+                break
+            else
                 let s -= 1
-            else
-                break
             endif
         endwhile
-        while e + 1 < len(cs)
-            if cs[e + 1] =~# '^[#a-fA-F0-9]$'
+        while e < len(cs)
+            if cs[e] == ')'
+                break
+            else
                 let e += 1
-            else
-                break
             endif
         endwhile
-        let target = join(cs[(s):(e)], '')
+        let ss = s:split3(cs, s, e)
+        let regex = '^[rR][gG][bB](\s*\([0-9]\+\)\s*,\s*\([0-9]\+\)\s*,\s*\([0-9]\+\)\s*)$'
+        let m = matchlist(ss[1], regex)
+        if !empty(m)
+            return {
+                    \ 'type' : 'paren_rgb',
+                    \ 'ss' : ss,
+                    \ 'red' : str2nr(m[1], 10),
+                    \ 'green' : str2nr(m[2], 10),
+                    \ 'blue' : str2nr(m[3], 10),
+                    \ 'alpha' : '',
+                    \ }
+        endif
     endif
-    let regex = '^#\([a-fA-F0-9][a-fA-F0-9]\)\([a-fA-F0-9][a-fA-F0-9]\)\([a-fA-F0-9][a-fA-F0-9]\)$'
-    let m = matchlist(target, regex)
-    if !empty(m)
-        return {
-                \ 'type' : 'hash_rgb',
-                \ 'position' : [s, e],
-                \ 'red' : str2nr(m[1], 16),
-                \ 'green' : str2nr(m[2], 16),
-                \ 'blue' : str2nr(m[3], 16),
-                \ 'alpha' : '',
-                \ }
-    else
-        return {}
-    endif
+    return {}
 endfunction
 
-function! s:paren_rbg() abort
+function! s:paren_rgba() abort
     let cs = split(getline('.'), '\zs')
-    let i = col('.') - 1
+    let i = s:col2idx(cs, col('.'))
     let s = i
     let e = i
-    let target = ''
-    while 0 <= s
-        if (cs[s] == 'r') || (cs[s] == 'R')
-            break
-        else
-            let s -= 1
+    if 0 < len(cs)
+        while 0 <= s
+            if (cs[s] == 'r') || (cs[s] == 'R')
+                break
+            else
+                let s -= 1
+            endif
+        endwhile
+        while e < len(cs)
+            if cs[e] == ')'
+                break
+            else
+                let e += 1
+            endif
+        endwhile
+        let ss = s:split3(cs, s, e)
+        let regex = '^[rR][gG][bB][aA](\s*\([0-9]\+\)\s*,\s*\([0-9]\+\)\s*,\s*\([0-9]\+\)\s*,\s*\([0-9.]\+\)\s*)$'
+        let m = matchlist(ss[1], regex)
+        if !empty(m)
+            return {
+                    \ 'type' : 'paren_rgba',
+                    \ 'ss' : ss,
+                    \ 'red' : str2nr(m[1], 10),
+                    \ 'green' : str2nr(m[2], 10),
+                    \ 'blue' : str2nr(m[3], 10),
+                    \ 'alpha' : m[4],
+                    \ }
         endif
-    endwhile
-    while e < len(cs)
-        if cs[e] == ')'
-            break
-        else
-            let e += 1
-        endif
-    endwhile
-    let target = join(cs[(s):(e)], '')
-    let regex = '^[rR][gG][bB](\s*\([0-9]\+\)\s*,\s*\([0-9]\+\)\s*,\s*\([0-9]\+\)\s*)$'
-    let m = matchlist(target, regex)
-    if !empty(m)
-        return {
-                \ 'type' : 'paren_rgb',
-                \ 'position' : [s, e],
-                \ 'red' : str2nr(m[1], 10),
-                \ 'green' : str2nr(m[2], 10),
-                \ 'blue' : str2nr(m[3], 10),
-                \ 'alpha' : '',
-                \ }
-    else
-        return {}
     endif
-endfunction
-
-function! s:paren_rbga() abort
-    let cs = split(getline('.'), '\zs')
-    let i = col('.') - 1
-    let s = i
-    let e = i
-    let target = ''
-    while 0 <= s
-        if (cs[s] == 'r') || (cs[s] == 'R')
-            break
-        else
-            let s -= 1
-        endif
-    endwhile
-    while e < len(cs)
-        if cs[e] == ')'
-            break
-        else
-            let e += 1
-        endif
-    endwhile
-    let target = join(cs[(s):(e)], '')
-    let regex = '^[rR][gG][bB][aA](\s*\([0-9]\+\)\s*,\s*\([0-9]\+\)\s*,\s*\([0-9]\+\)\s*,\s*\([0-9.]\+\)\s*)$'
-    let m = matchlist(target, regex)
-    if !empty(m)
-        return {
-                \ 'type' : 'paren_rgba',
-                \ 'position' : [s, e],
-                \ 'red' : str2nr(m[1], 10),
-                \ 'green' : str2nr(m[2], 10),
-                \ 'blue' : str2nr(m[3], 10),
-                \ 'alpha' : m[4],
-                \ }
-    else
-        return {}
-    endif
+    return {}
 endfunction
 
 function! coloredit#exec() abort
-    let info = s:hash_rbg()
+    let info = s:hash_rgb()
     if empty(info)
-        let info = s:paren_rbg()
+        let info = s:paren_rgb()
     endif
     if empty(info)
-        let info = s:paren_rbga()
+        let info = s:paren_rgba()
     endif
     if !empty(info)
         let s:info = info
@@ -150,12 +174,12 @@ function! coloredit#exec() abort
         call win_execute(winid, 'setfiletype coloredit')
     else
         echohl Error
-        echo printf('[%s] please position the cursor on "#rrggbb" or "rbg(rr,gg,bb)" or "rbga(rr,gg,bb,aa)"', s:pluginname)
+        echo printf('[%s] please position the cursor on "#rrggbb" or "rgb(rr,gg,bb)" or "rgba(rr,gg,bb,aa)"', s:pluginname)
         echohl None
     endif
 endfunction
 
-function! coloredit#generate_hash_rbg(winid) abort
+function! coloredit#generate_hash_rgb(winid) abort
     let bnr = winbufnr(a:winid)
     let lines = getbufline(bnr, 1, '$')
     return printf('#%02x%02x%02x',
@@ -164,7 +188,7 @@ function! coloredit#generate_hash_rbg(winid) abort
             \ str2nr(split(lines[3], s:delimiter)[1]))
 endfunction
 
-function! coloredit#generate_paren_rbg(winid) abort
+function! coloredit#generate_paren_rgb(winid) abort
     let bnr = winbufnr(a:winid)
     let lines = getbufline(bnr, 1, '$')
     return printf('rgb(%d, %d, %d)',
@@ -173,7 +197,7 @@ function! coloredit#generate_paren_rbg(winid) abort
             \ str2nr(split(lines[3], s:delimiter)[1]))
 endfunction
 
-function! coloredit#generate_paren_rbga(winid) abort
+function! coloredit#generate_paren_rgba(winid) abort
     let bnr = winbufnr(a:winid)
     let lines = getbufline(bnr, 1, '$')
     return printf('rgba(%d, %d, %d, %s)',
@@ -184,26 +208,19 @@ function! coloredit#generate_paren_rbga(winid) abort
 endfunction
 
 function! coloredit#set_color_on_firstline(winid) abort
-    let rbg = coloredit#generate_hash_rbg(a:winid)
-    call win_execute(a:winid, printf('highlight! %sFirstLine guifg=%s guibg=%s', s:pluginname, rbg, rbg))
+    let rgb = coloredit#generate_hash_rgb(a:winid)
+    call win_execute(a:winid, printf('highlight! %sFirstLine guifg=%s guibg=%s', s:pluginname, rgb, rgb))
 endfunction
 
 function! coloredit#callback(winid, key) abort
     if -1 != a:key
-        let cs = split(getline('.'), '\zs')
         if s:info.type == 'hash_rgb'
-            let rgb_cs = split(coloredit#generate_hash_rbg(a:winid), '\zs')
+            call setline('.', s:info.ss[0] .. coloredit#generate_hash_rgb(a:winid) .. s:info.ss[2])
         elseif s:info.type == 'paren_rgb'
-            let rgb_cs = split(coloredit#generate_paren_rbg(a:winid), '\zs')
+            call setline('.', s:info.ss[0] .. coloredit#generate_paren_rgb(a:winid) .. s:info.ss[2])
         elseif s:info.type == 'paren_rgba'
-            let rgb_cs = split(coloredit#generate_paren_rbga(a:winid), '\zs')
-        else
-            return
+            call setline('.', s:info.ss[0] .. coloredit#generate_paren_rgba(a:winid) .. s:info.ss[2])
         endif
-        let head = (0 < s:info.position[0]) ? cs[:(s:info.position[0] - 1)] : []
-        let tail = cs[(s:info.position[1] + 1):]
-        let cs = head + rgb_cs + tail
-        call setline('.', join(cs, ''))
     else
         echohl Error
         echo printf('[%s] cancel', s:pluginname)
