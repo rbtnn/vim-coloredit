@@ -34,16 +34,16 @@ Plug 'rbtnn/vim-coloredit'
 ### :ColorEdit
 
 __#rrggbb__
-![](https://raw.githubusercontent.com/rbtnn/vim-coloredit/master/coloredit.gif)
+![](https://raw.githubusercontent.com/rbtnn/vim-coloredit/master/hash_rgb.gif)
 
 __rgb({red},{green},{blue})__
-![](https://raw.githubusercontent.com/rbtnn/vim-coloredit/master/coloredit.gif)
+![](https://raw.githubusercontent.com/rbtnn/vim-coloredit/master/paren_rgb.gif)
 
 __rgba({red},{green},{blue},{alpha})__
-![](https://raw.githubusercontent.com/rbtnn/vim-coloredit/master/coloredit.gif)
+![](https://raw.githubusercontent.com/rbtnn/vim-coloredit/master/paren_rgba.gif)
 
 __hsl({hue},{saturation}%,{lightness}%)__
-![](https://raw.githubusercontent.com/rbtnn/vim-coloredit/master/coloredit.gif)
+![](https://raw.githubusercontent.com/rbtnn/vim-coloredit/master/paren_hsl.gif)
 
 
 ## License

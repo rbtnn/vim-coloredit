@@ -199,7 +199,7 @@ function! coloredit#exec() abort
             \   'filter' : 'coloredit#filter',
             \   'callback' : 'coloredit#callback',
             \ }
-        let lines = [repeat('X', len(s:makeline('_', 0)))]
+        let lines = [repeat('X', len(s:makeline_rgb('_', 0)))]
         if s:info.type == 'paren_hsl'
             let lines += [
                 \   s:makeline_hsl('H', info.hue),
