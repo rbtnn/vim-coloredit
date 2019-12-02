@@ -1,7 +1,5 @@
 
-if has('vimscript-3')
-    scriptversion 3
-else
+if !(has('popupwin') || has('textprop'))
     finish
 endif
 
