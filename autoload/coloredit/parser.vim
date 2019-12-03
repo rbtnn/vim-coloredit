@@ -25,7 +25,8 @@ function! coloredit#parser#hash_rgb() abort
             let m = matchlist(ss[1], regex)
             if !empty(m)
                 return {
-                    \ 'type' : 'hash_rgb',
+                    \ 'type' : 'rgb',
+                    \ 'is_paren' : v:false,
                     \ 'head' : ss[0],
                     \ 'tail' : ss[2],
                     \ 'red' : str2nr(m[1], 16),
@@ -64,7 +65,8 @@ function! coloredit#parser#paren_rgb() abort
         let m = matchlist(ss[1], regex)
         if !empty(m)
             return {
-                \ 'type' : 'paren_rgb',
+                \ 'type' : 'rgb',
+                \ 'is_paren' : v:true,
                 \ 'head' : ss[0],
                 \ 'tail' : ss[2],
                 \ 'red' : str2nr(m[1], 10),
@@ -102,7 +104,8 @@ function! coloredit#parser#paren_rgba() abort
         let m = matchlist(ss[1], regex)
         if !empty(m)
             return {
-                \ 'type' : 'paren_rgba',
+                \ 'type' : 'rgba',
+                \ 'is_paren' : v:true,
                 \ 'head' : ss[0],
                 \ 'tail' : ss[2],
                 \ 'red' : str2nr(m[1], 10),
@@ -140,7 +143,8 @@ function! coloredit#parser#paren_hsl() abort
         let m = matchlist(ss[1], regex)
         if !empty(m)
             return {
-                \ 'type' : 'paren_hsl',
+                \ 'type' : 'hsl',
+                \ 'is_paren' : v:true,
                 \ 'head' : ss[0],
                 \ 'tail' : ss[2],
                 \ 'hue' : str2nr(m[1], 10),
@@ -178,7 +182,8 @@ function! coloredit#parser#paren_hsla() abort
         let m = matchlist(ss[1], regex)
         if !empty(m)
             return {
-                \ 'type' : 'paren_hsla',
+                \ 'type' : 'hsla',
+                \ 'is_paren' : v:true,
                 \ 'head' : ss[0],
                 \ 'tail' : ss[2],
                 \ 'hue' : str2nr(m[1], 10),

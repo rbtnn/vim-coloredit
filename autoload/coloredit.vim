@@ -37,7 +37,7 @@ function! coloredit#exec() abort
                 \   'callback' : 'coloredit#callback',
                 \ }
             let lines = [repeat('X', len(s:makeline_rgb('_', 0)))]
-            if (info.type == 'paren_hsl') || (info.type == 'paren_hsla')
+            if (info.type == 'hsl') || (info.type == 'hsla')
                 let lines += [
                     \   s:makeline_hsl('H', info.hue),
                     \   s:makeline_hsl('S', info.saturation),
@@ -51,8 +51,13 @@ function! coloredit#exec() abort
                     \ ]
             endif
             let lines += (empty(info.alpha) ? [''] : [(s:makeline_alpha('A', info.alpha))])
+            if (info.type == 'hsl') || (info.type == 'hsla')
+                let lines += ['display-mode:HSL -> RGB']
+            else
+                let lines += ['display-mode:RGB -> HSL']
+            endif
             let winid = popup_menu(lines, options)
-            if (info.type == 'paren_hsl') || (info.type == 'paren_hsla')
+            if (info.type == 'hsl') || (info.type == 'hsla')
                 call coloredit#set_color_on_firstline_hsl(winid)
             else
                 call coloredit#set_color_on_firstline_rgb(winid)
@@ -88,23 +93,23 @@ function! s:get_3or4values(winid) abort
     return xs
 endfunction
 
-function! coloredit#generate_hash_rgb(winid) abort
-    return call('printf', ['#%02x%02x%02x'] + s:get_3or4values(a:winid)[:2])
+function! coloredit#generate_rgb(winid, is_paren) abort
+    if a:is_paren
+        return call('printf', ['rgb(%d, %d, %d)'] + s:get_3or4values(a:winid)[:2])
+    else
+        return call('printf', ['#%02x%02x%02x'] + s:get_3or4values(a:winid)[:2])
+    endif
 endfunction
 
-function! coloredit#generate_paren_rgb(winid) abort
-    return call('printf', ['rgb(%d, %d, %d)'] + s:get_3or4values(a:winid)[:2])
-endfunction
-
-function! coloredit#generate_paren_rgba(winid) abort
+function! coloredit#generate_rgba(winid, is_paren) abort
     return call('printf', ['rgba(%d, %d, %d, %s)'] + s:get_3or4values(a:winid))
 endfunction
 
-function! coloredit#generate_paren_hsl(winid) abort
+function! coloredit#generate_hsl(winid, is_paren) abort
     return call('printf', ['hsl(%d, %d%%, %d%%)'] + s:get_3or4values(a:winid)[:2])
 endfunction
 
-function! coloredit#generate_paren_hsla(winid) abort
+function! coloredit#generate_hsla(winid, is_paren) abort
     return call('printf', ['hsla(%d, %d%%, %d%%, %s)'] + s:get_3or4values(a:winid))
 endfunction
 
@@ -113,7 +118,7 @@ function! coloredit#generate_hash_rgb_from_hsl(winid) abort
 endfunction
 
 function! coloredit#set_color_on_firstline_rgb(winid) abort
-    let rgb = coloredit#generate_hash_rgb(a:winid)
+    let rgb = coloredit#generate_rgb(a:winid, v:false)
     call win_execute(a:winid, printf('highlight! %sFirstLine guifg=%s guibg=%s', s:pluginname, rgb, rgb))
 endfunction
 
@@ -124,16 +129,41 @@ endfunction
 
 function! coloredit#callback(winid, key) abort
     if -1 != a:key
-        if s:info.type == 'hash_rgb'
-            call setline('.', s:info.head .. coloredit#generate_hash_rgb(a:winid) .. s:info.tail)
-        elseif s:info.type == 'paren_rgb'
-            call setline('.', s:info.head .. coloredit#generate_paren_rgb(a:winid) .. s:info.tail)
-        elseif s:info.type == 'paren_rgba'
-            call setline('.', s:info.head .. coloredit#generate_paren_rgba(a:winid) .. s:info.tail)
-        elseif s:info.type == 'paren_hsl'
-            call setline('.', s:info.head .. coloredit#generate_paren_hsl(a:winid) .. s:info.tail)
-        elseif s:info.type == 'paren_hsla'
-            call setline('.', s:info.head .. coloredit#generate_paren_hsla(a:winid) .. s:info.tail)
+        let bnr = winbufnr(a:winid)
+        let lines = getbufline(bnr, 1, '$')
+        let is_rbg = lines[1][0] == 'R'
+        if s:info.type == 'rgb'
+            if !is_rbg
+                let rgb = call('coloredit#converter#hsl2rgb', s:get_3or4values(a:winid)[:2])
+                call s:setline_rgb(bnr, 2, 'R', rgb[0])
+                call s:setline_rgb(bnr, 3, 'G', rgb[1])
+                call s:setline_rgb(bnr, 4, 'B', rgb[2])
+            endif
+            call setline('.', s:info.head .. coloredit#generate_rgb(a:winid, s:info.is_paren) .. s:info.tail)
+        elseif s:info.type == 'rgba'
+            if !is_rbg
+                let rgb = call('coloredit#converter#hsl2rgb', s:get_3or4values(a:winid)[:2])
+                call s:setline_rgb(bnr, 2, 'R', rgb[0])
+                call s:setline_rgb(bnr, 3, 'G', rgb[1])
+                call s:setline_rgb(bnr, 4, 'B', rgb[2])
+            endif
+            call setline('.', s:info.head .. coloredit#generate_rgba(a:winid, s:info.is_paren) .. s:info.tail)
+        elseif s:info.type == 'hsl'
+            if is_rbg
+                let hsl = call('coloredit#converter#rgb2hsl', s:get_3or4values(a:winid)[:2])
+                call s:setline_rgb(bnr, 2, 'H', hsl[0])
+                call s:setline_rgb(bnr, 3, 'S', hsl[1])
+                call s:setline_rgb(bnr, 4, 'L', hsl[2])
+            endif
+            call setline('.', s:info.head .. coloredit#generate_hsl(a:winid, s:info.is_paren) .. s:info.tail)
+        elseif s:info.type == 'hsla'
+            if is_rbg
+                let hsl = call('coloredit#converter#rgb2hsl', s:get_3or4values(a:winid)[:2])
+                call s:setline_rgb(bnr, 2, 'H', hsl[0])
+                call s:setline_rgb(bnr, 3, 'S', hsl[1])
+                call s:setline_rgb(bnr, 4, 'L', hsl[2])
+            endif
+            call setline('.', s:info.head .. coloredit#generate_hsla(a:winid, s:info.is_paren) .. s:info.tail)
         endif
     else
         echohl Error
@@ -178,10 +208,10 @@ function! coloredit#filter(winid, key) abort
         let xs = split(lines[lnum - 1], s:delimiter)
         let n = str2nr(xs[1]) - 1
         if is_rbg
-            call s:setline_rgb(bnr, lnum, xs, n)
+            call s:setline_rgb(bnr, lnum, xs[0], n)
             call coloredit#set_color_on_firstline_rgb(a:winid)
         else
-            call s:setline_hsl(bnr, lnum, xs, n)
+            call s:setline_hsl(bnr, lnum, xs[0], n)
             call coloredit#set_color_on_firstline_hsl(a:winid)
         endif
         return 1
@@ -190,10 +220,28 @@ function! coloredit#filter(winid, key) abort
         let xs = split(lines[lnum - 1], s:delimiter)
         let n = str2nr(xs[1]) + 1
         if is_rbg
-            call s:setline_rgb(bnr, lnum, xs, n)
+            call s:setline_rgb(bnr, lnum, xs[0], n)
             call coloredit#set_color_on_firstline_rgb(a:winid)
         else
-            call s:setline_hsl(bnr, lnum, xs, n)
+            call s:setline_hsl(bnr, lnum, xs[0], n)
+            call coloredit#set_color_on_firstline_hsl(a:winid)
+        endif
+        return 1
+    endif
+    if ((a:key == 'h') || (a:key == 'l')) && (6 == lnum)
+        if lines[lnum - 1] == 'display-mode:HSL -> RGB'
+            let rgb = call('coloredit#converter#hsl2rgb', s:get_3or4values(a:winid)[:2])
+            call s:setline_rgb(bnr, 2, 'R', rgb[0])
+            call s:setline_rgb(bnr, 3, 'G', rgb[1])
+            call s:setline_rgb(bnr, 4, 'B', rgb[2])
+            call setbufline(bnr, lnum, 'display-mode:RGB -> HSL')
+            call coloredit#set_color_on_firstline_rgb(a:winid)
+        else
+            let hsl = call('coloredit#converter#rgb2hsl', s:get_3or4values(a:winid)[:2])
+            call s:setline_hsl(bnr, 2, 'H', hsl[0])
+            call s:setline_hsl(bnr, 3, 'S', hsl[1])
+            call s:setline_hsl(bnr, 4, 'L', hsl[2])
+            call setbufline(bnr, lnum, 'display-mode:HSL -> RGB')
             call coloredit#set_color_on_firstline_hsl(a:winid)
         endif
         return 1
@@ -231,16 +279,15 @@ function! s:makeline_hsl(x, n) abort
 endfunction
 
 function! s:makeline_alpha(x, n) abort
-    let n = a:n
-    return printf('%s%s%s', a:x, s:delimiter, n)
+    return printf('%s%s%s', a:x, s:delimiter, a:n)
 endfunction
 
-function! s:setline_rgb(bnr, lnum, xs, n) abort
-    call setbufline(a:bnr, a:lnum, s:makeline_rgb(a:xs[0], a:n))
+function! s:setline_rgb(bnr, lnum, x, n) abort
+    call setbufline(a:bnr, a:lnum, s:makeline_rgb(a:x, a:n))
 endfunction
 
-function! s:setline_hsl(bnr, lnum, xs, n) abort
-    call setbufline(a:bnr, a:lnum, s:makeline_hsl(a:xs[0], a:n))
+function! s:setline_hsl(bnr, lnum, x, n) abort
+    call setbufline(a:bnr, a:lnum, s:makeline_hsl(a:x, a:n))
 endfunction
 
 

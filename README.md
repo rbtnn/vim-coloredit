@@ -11,6 +11,8 @@ This plugin provides to edit RGB and HSL such as the following:
 
 When you edit `rgba()` or `hsla()`, this plugin does not support to edit the alpha value.  
 
+Also this plugin provides to switch to another display-mode such as RGB and HSL.
+
 ## Requirements
 
 * Vim only. Does not support Neovim
@@ -34,26 +36,7 @@ Plug 'rbtnn/vim-coloredit'
 
 ### :ColorEdit
 
-__hsl({hue},{saturation}%,{lightness}%)__
-
-![](https://raw.githubusercontent.com/rbtnn/vim-coloredit/master/paren_hsl.gif)
-
-__hsla({hue},{saturation}%,{lightness}%,{alpha})__
-
-![](https://raw.githubusercontent.com/rbtnn/vim-coloredit/master/paren_hsla.gif)
-
-__rgb({red},{green},{blue})__
-
-![](https://raw.githubusercontent.com/rbtnn/vim-coloredit/master/paren_rgb.gif)
-
-__rgba({red},{green},{blue},{alpha})__
-
-![](https://raw.githubusercontent.com/rbtnn/vim-coloredit/master/paren_rgba.gif)
-
-__#rrggbb__
-
-![](https://raw.githubusercontent.com/rbtnn/vim-coloredit/master/hash_rgb.gif)
-
+![](https://raw.githubusercontent.com/rbtnn/vim-coloredit/master/coloredit.gif)
 
 ## License
 
