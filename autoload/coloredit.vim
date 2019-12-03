@@ -1,5 +1,15 @@
 
-if !(has('popupwin') || has('textprop'))
+let s:flag = v:false
+
+if has('gui_running')
+    let s:flag = v:true
+elseif has('termguicolors')
+    if &termguicolors
+        let s:flag = v:true
+    endif
+endif
+
+if !((has('popupwin') || has('textprop')) && s:flag)
     finish
 endif
 
@@ -230,51 +240,40 @@ function! coloredit#exec() abort
     endif
 endfunction
 
+function! s:get_3or4values(winid) abort
+    let lines = getbufline(winbufnr(a:winid), 1, '$')
+    let xs = [
+        \ str2nr(get(split(lines[1], s:delimiter), 1, '0')),
+        \ str2nr(get(split(lines[2], s:delimiter), 1, '0')),
+        \ str2nr(get(split(lines[3], s:delimiter), 1, '0'))
+        \ ]
+    if 4 < len(lines)
+        let alpha = split(lines[4], s:delimiter)
+        if get(alpha, 0, '') == 'A'
+            let xs += [get(alpha, 1, '0')]
+        endif
+    endif
+    return xs
+endfunction
+
 function! coloredit#generate_hash_rgb(winid) abort
-    let bnr = winbufnr(a:winid)
-    let lines = getbufline(bnr, 1, '$')
-    return printf('#%02x%02x%02x',
-        \ str2nr(split(lines[1], s:delimiter)[1]),
-        \ str2nr(split(lines[2], s:delimiter)[1]),
-        \ str2nr(split(lines[3], s:delimiter)[1]))
+    return call('printf', ['#%02x%02x%02x'] + s:get_3or4values(a:winid))
 endfunction
 
 function! coloredit#generate_paren_rgb(winid) abort
-    let bnr = winbufnr(a:winid)
-    let lines = getbufline(bnr, 1, '$')
-    return printf('rgb(%d, %d, %d)',
-        \ str2nr(split(lines[1], s:delimiter)[1]),
-        \ str2nr(split(lines[2], s:delimiter)[1]),
-        \ str2nr(split(lines[3], s:delimiter)[1]))
+    return call('printf', ['rgb(%d, %d, %d)'] + s:get_3or4values(a:winid))
 endfunction
 
 function! coloredit#generate_paren_rgba(winid) abort
-    let bnr = winbufnr(a:winid)
-    let lines = getbufline(bnr, 1, '$')
-    return printf('rgba(%d, %d, %d, %s)',
-        \ str2nr(split(lines[1], s:delimiter)[1]),
-        \ str2nr(split(lines[2], s:delimiter)[1]),
-        \ str2nr(split(lines[3], s:delimiter)[1]),
-        \ split(lines[4], s:delimiter)[1])
+    return call('printf', ['rgba(%d, %d, %d, %s)'] + s:get_3or4values(a:winid))
 endfunction
 
 function! coloredit#generate_paren_hsl(winid) abort
-    let bnr = winbufnr(a:winid)
-    let lines = getbufline(bnr, 1, '$')
-    return printf('hsl(%d, %d%%, %d%%)',
-        \ str2nr(split(lines[1], s:delimiter)[1]),
-        \ str2nr(split(lines[2], s:delimiter)[1]),
-        \ str2nr(split(lines[3], s:delimiter)[1]))
+    return call('printf', ['hsl(%d, %d%%, %d%%)'] + s:get_3or4values(a:winid))
 endfunction
 
 function! coloredit#generate_hash_rgb_from_hsl(winid) abort
-    let bnr = winbufnr(a:winid)
-    let lines = getbufline(bnr, 1, '$')
-    let H = str2nr(split(lines[1], s:delimiter)[1])
-    let S = str2nr(split(lines[2], s:delimiter)[1])
-    let L = str2nr(split(lines[3], s:delimiter)[1])
-    let rgb = s:hsl2rgb(H, S, L)
-    return printf('#%02x%02x%02x', rgb[0], rgb[1], rgb[2])
+    return call ('printf', ['#%02x%02x%02x'] + call('s:hsl2rgb', s:get_3or4values(a:winid)))
 endfunction
 
 function! coloredit#set_color_on_firstline_rgb(winid) abort

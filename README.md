@@ -13,8 +13,8 @@ When you edit `rgba({red},{green},{blue},{alpha})`, this plugin does not support
 ## Requirements
 
 * Vim only. Does not support Neovim
-* Vim 8.1 or above
 * Vim must be compiled with `+popupwin` or `+textprop` feature
+* 256 bit color
 
 ## Concepts
 
