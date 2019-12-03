@@ -3,12 +3,13 @@
 
 This plugin provides to edit RGB and HSL such as the following:
 
-* `#rrggbb`
+* `hsl({hue},{saturation}%,{lightness}%)`
+* `hsla({hue},{saturation}%,{lightness}%,{alpha})`
 * `rgb({red},{green},{blue})` 
 * `rgba({red},{green},{blue},{alpha})`
-* `hsl({hue},{saturation}%,{lightness}%)`
+* `#rrggbb`
 
-When you edit `rgba({red},{green},{blue},{alpha})`, this plugin does not support to edit the alpha value.  
+When you edit `rgba()` or `hsla()`, this plugin does not support to edit the alpha value.  
 
 ## Requirements
 
@@ -33,9 +34,13 @@ Plug 'rbtnn/vim-coloredit'
 
 ### :ColorEdit
 
-__#rrggbb__
+__hsl({hue},{saturation}%,{lightness}%)__
 
-![](https://raw.githubusercontent.com/rbtnn/vim-coloredit/master/hash_rgb.gif)
+![](https://raw.githubusercontent.com/rbtnn/vim-coloredit/master/paren_hsl.gif)
+
+__hsla({hue},{saturation}%,{lightness}%,{alpha})__
+
+![](https://raw.githubusercontent.com/rbtnn/vim-coloredit/master/paren_hsla.gif)
 
 __rgb({red},{green},{blue})__
 
@@ -45,9 +50,9 @@ __rgba({red},{green},{blue},{alpha})__
 
 ![](https://raw.githubusercontent.com/rbtnn/vim-coloredit/master/paren_rgba.gif)
 
-__hsl({hue},{saturation}%,{lightness}%)__
+__#rrggbb__
 
-![](https://raw.githubusercontent.com/rbtnn/vim-coloredit/master/paren_hsl.gif)
+![](https://raw.githubusercontent.com/rbtnn/vim-coloredit/master/hash_rgb.gif)
 
 
 ## License

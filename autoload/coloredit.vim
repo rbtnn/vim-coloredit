@@ -1,241 +1,73 @@
 
-let s:flag = v:false
-
-if has('gui_running')
-    let s:flag = v:true
-elseif has('termguicolors')
-    if &termguicolors
-        let s:flag = v:true
-    endif
-endif
-
-if !((has('popupwin') || has('textprop')) && s:flag)
-    finish
-endif
-
 let s:pluginname = 'ColorEdit'
 let s:delimiter = '|'
 let s:info = 0
 
-function! s:col2idx(cs, col) abort
-    let i = 0
-    let total = a:col
-    for c in a:cs
-        let total -= len(c)
-        if 0 < total
-            let i += 1
-        else
-            break
-        endif
-    endfor
-    return i
-endfunction
-
-function! s:split3(cs, s, e) abort
-    let cs = a:cs
-    let s = a:s
-    let e = a:e
-    let s1 = (0 < a:s) ? join(cs[:(s - 1)], '') : ''
-    let s2 = join(cs[(s):(e)], '')
-    let s3 = join(cs[(e + 1):], '')
-    return [s1, s2, s3]
-endfunction
-
-function! s:hash_rgb() abort
-    let cs = split(getline('.'), '\zs')
-    let i = s:col2idx(cs, col('.'))
-    let s = i
-    let e = i
-    if 0 < len(cs)
-        if cs[i] =~# '^[#a-fA-F0-9]$'
-            while 0 <= s - 1
-                if cs[s - 1] =~# '^[#a-fA-F0-9]$'
-                    let s -= 1
-                else
-                    break
-                endif
-            endwhile
-            while e + 1 < len(cs)
-                if cs[e + 1] =~# '^[#a-fA-F0-9]$'
-                    let e += 1
-                else
-                    break
-                endif
-            endwhile
-            let ss = s:split3(cs, s, e)
-            let regex = '^#\([a-fA-F0-9][a-fA-F0-9]\)\([a-fA-F0-9][a-fA-F0-9]\)\([a-fA-F0-9][a-fA-F0-9]\)$'
-            let m = matchlist(ss[1], regex)
-            if !empty(m)
-                return {
-                    \ 'type' : 'hash_rgb',
-                    \ 'ss' : ss,
-                    \ 'red' : str2nr(m[1], 16),
-                    \ 'green' : str2nr(m[2], 16),
-                    \ 'blue' : str2nr(m[3], 16),
-                    \ 'alpha' : '',
-                    \ }
-            endif
+function! coloredit#enabled() abort
+    let flag = v:false
+    if has('gui_running')
+        let flag = v:true
+    elseif has('termguicolors')
+        if &termguicolors
+            let flag = v:true
         endif
     endif
-    return {}
-endfunction
-
-function! s:paren_rgb() abort
-    let cs = split(getline('.'), '\zs')
-    let i = s:col2idx(cs, col('.'))
-    let s = i
-    let e = i
-    if 0 < len(cs)
-        while 0 <= s
-            if (cs[s] == 'r') || (cs[s] == 'R')
-                break
-            else
-                let s -= 1
-            endif
-        endwhile
-        while e < len(cs)
-            if cs[e] == ')'
-                break
-            else
-                let e += 1
-            endif
-        endwhile
-        let ss = s:split3(cs, s, e)
-        let regex = '^[rR][gG][bB](\s*\([0-9]\+\)\s*,\s*\([0-9]\+\)\s*,\s*\([0-9]\+\)\s*)$'
-        let m = matchlist(ss[1], regex)
-        if !empty(m)
-            return {
-                \ 'type' : 'paren_rgb',
-                \ 'ss' : ss,
-                \ 'red' : str2nr(m[1], 10),
-                \ 'green' : str2nr(m[2], 10),
-                \ 'blue' : str2nr(m[3], 10),
-                \ 'alpha' : '',
-                \ }
-        endif
-    endif
-    return {}
-endfunction
-
-function! s:paren_rgba() abort
-    let cs = split(getline('.'), '\zs')
-    let i = s:col2idx(cs, col('.'))
-    let s = i
-    let e = i
-    if 0 < len(cs)
-        while 0 <= s
-            if (cs[s] == 'r') || (cs[s] == 'R')
-                break
-            else
-                let s -= 1
-            endif
-        endwhile
-        while e < len(cs)
-            if cs[e] == ')'
-                break
-            else
-                let e += 1
-            endif
-        endwhile
-        let ss = s:split3(cs, s, e)
-        let regex = '^[rR][gG][bB][aA](\s*\([0-9]\+\)\s*,\s*\([0-9]\+\)\s*,\s*\([0-9]\+\)\s*,\s*\([0-9.]\+\)\s*)$'
-        let m = matchlist(ss[1], regex)
-        if !empty(m)
-            return {
-                \ 'type' : 'paren_rgba',
-                \ 'ss' : ss,
-                \ 'red' : str2nr(m[1], 10),
-                \ 'green' : str2nr(m[2], 10),
-                \ 'blue' : str2nr(m[3], 10),
-                \ 'alpha' : m[4],
-                \ }
-        endif
-    endif
-    return {}
-endfunction
-
-function! s:paren_hsl() abort
-    let cs = split(getline('.'), '\zs')
-    let i = s:col2idx(cs, col('.'))
-    let s = i
-    let e = i
-    if 0 < len(cs)
-        while 0 <= s
-            if (cs[s] == 'h') || (cs[s] == 'H')
-                break
-            else
-                let s -= 1
-            endif
-        endwhile
-        while e < len(cs)
-            if cs[e] == ')'
-                break
-            else
-                let e += 1
-            endif
-        endwhile
-        let ss = s:split3(cs, s, e)
-        let regex = '^[hH][sS][lL](\s*\([0-9]\+\)\s*,\s*\([0-9]\+\)\s*%,\s*\([0-9]\+\)\s*%)$'
-        let m = matchlist(ss[1], regex)
-        if !empty(m)
-            return {
-                \ 'type' : 'paren_hsl',
-                \ 'ss' : ss,
-                \ 'hue' : str2nr(m[1], 10),
-                \ 'saturation' : str2nr(m[2], 10),
-                \ 'lightness' : str2nr(m[3], 10),
-                \ 'alpha' : '',
-                \ }
-        endif
-    endif
-    return {}
+    return (has('popupwin') || has('textprop')) && flag
 endfunction
 
 function! coloredit#exec() abort
-    let info = s:hash_rgb()
-    if empty(info)
-        let info = s:paren_rgb()
-    endif
-    if empty(info)
-        let info = s:paren_rgba()
-    endif
-    if empty(info)
-        let info = s:paren_hsl()
-    endif
-    if !empty(info)
-        let s:info = info
-        let options = {
-            \   'pos' : 'center',
-            \   'filter' : 'coloredit#filter',
-            \   'callback' : 'coloredit#callback',
-            \ }
-        let lines = [repeat('X', len(s:makeline_rgb('_', 0)))]
-        if s:info.type == 'paren_hsl'
-            let lines += [
-                \   s:makeline_hsl('H', info.hue),
-                \   s:makeline_hsl('S', info.saturation),
-                \   s:makeline_hsl('L', info.lightness),
-                \ ]
-        else
-            let lines += [
-                \   s:makeline_rgb('R', info.red),
-                \   s:makeline_rgb('G', info.green),
-                \   s:makeline_rgb('B', info.blue),
-                \ ]
+    if coloredit#enabled()
+        let info = coloredit#parser#hash_rgb()
+        if empty(info)
+            let info = coloredit#parser#paren_rgb()
+        endif
+        if empty(info)
+            let info = coloredit#parser#paren_rgba()
+        endif
+        if empty(info)
+            let info = coloredit#parser#paren_hsl()
+        endif
+        if empty(info)
+            let info = coloredit#parser#paren_hsla()
+        endif
+        if !empty(info)
+            let options = {
+                \   'pos' : 'center',
+                \   'filter' : 'coloredit#filter',
+                \   'callback' : 'coloredit#callback',
+                \ }
+            let lines = [repeat('X', len(s:makeline_rgb('_', 0)))]
+            if (info.type == 'paren_hsl') || (info.type == 'paren_hsla')
+                let lines += [
+                    \   s:makeline_hsl('H', info.hue),
+                    \   s:makeline_hsl('S', info.saturation),
+                    \   s:makeline_hsl('L', info.lightness),
+                    \ ]
+            else
+                let lines += [
+                    \   s:makeline_rgb('R', info.red),
+                    \   s:makeline_rgb('G', info.green),
+                    \   s:makeline_rgb('B', info.blue),
+                    \ ]
+            endif
             let lines += (empty(info.alpha) ? [''] : [(s:makeline_alpha('A', info.alpha))])
-        endif
-
-        let winid = popup_menu(lines, options)
-        if s:info.type == 'paren_hsl'
-            call coloredit#set_color_on_firstline_hsl(winid)
+            let winid = popup_menu(lines, options)
+            if (info.type == 'paren_hsl') || (info.type == 'paren_hsla')
+                call coloredit#set_color_on_firstline_hsl(winid)
+            else
+                call coloredit#set_color_on_firstline_rgb(winid)
+            endif
+            call win_execute(winid, printf('call setpos(".", [0, %d, 1, 0])', 2))
+            call win_execute(winid, 'setfiletype coloredit')
+            let s:info = info
         else
-            call coloredit#set_color_on_firstline_rgb(winid)
+            echohl Error
+            echo printf('[%s] please position the cursor on RGB or HSL', s:pluginname)
+            echohl None
         endif
-        call win_execute(winid, printf('call setpos(".", [0, %d, 1, 0])', 2))
-        call win_execute(winid, 'setfiletype coloredit')
     else
         echohl Error
-        echo printf('[%s] please position the cursor on RGB or HSL', s:pluginname)
+        echo printf('[%s] does not support your vim', s:pluginname)
         echohl None
     endif
 endfunction
@@ -257,11 +89,11 @@ function! s:get_3or4values(winid) abort
 endfunction
 
 function! coloredit#generate_hash_rgb(winid) abort
-    return call('printf', ['#%02x%02x%02x'] + s:get_3or4values(a:winid))
+    return call('printf', ['#%02x%02x%02x'] + s:get_3or4values(a:winid)[:2])
 endfunction
 
 function! coloredit#generate_paren_rgb(winid) abort
-    return call('printf', ['rgb(%d, %d, %d)'] + s:get_3or4values(a:winid))
+    return call('printf', ['rgb(%d, %d, %d)'] + s:get_3or4values(a:winid)[:2])
 endfunction
 
 function! coloredit#generate_paren_rgba(winid) abort
@@ -269,11 +101,15 @@ function! coloredit#generate_paren_rgba(winid) abort
 endfunction
 
 function! coloredit#generate_paren_hsl(winid) abort
-    return call('printf', ['hsl(%d, %d%%, %d%%)'] + s:get_3or4values(a:winid))
+    return call('printf', ['hsl(%d, %d%%, %d%%)'] + s:get_3or4values(a:winid)[:2])
+endfunction
+
+function! coloredit#generate_paren_hsla(winid) abort
+    return call('printf', ['hsla(%d, %d%%, %d%%, %s)'] + s:get_3or4values(a:winid))
 endfunction
 
 function! coloredit#generate_hash_rgb_from_hsl(winid) abort
-    return call ('printf', ['#%02x%02x%02x'] + call('s:hsl2rgb', s:get_3or4values(a:winid)))
+    return call ('printf', ['#%02x%02x%02x'] + call('coloredit#converter#hsl2rgb', s:get_3or4values(a:winid)[:2]))
 endfunction
 
 function! coloredit#set_color_on_firstline_rgb(winid) abort
@@ -289,13 +125,15 @@ endfunction
 function! coloredit#callback(winid, key) abort
     if -1 != a:key
         if s:info.type == 'hash_rgb'
-            call setline('.', s:info.ss[0] .. coloredit#generate_hash_rgb(a:winid) .. s:info.ss[2])
+            call setline('.', s:info.head .. coloredit#generate_hash_rgb(a:winid) .. s:info.tail)
         elseif s:info.type == 'paren_rgb'
-            call setline('.', s:info.ss[0] .. coloredit#generate_paren_rgb(a:winid) .. s:info.ss[2])
+            call setline('.', s:info.head .. coloredit#generate_paren_rgb(a:winid) .. s:info.tail)
         elseif s:info.type == 'paren_rgba'
-            call setline('.', s:info.ss[0] .. coloredit#generate_paren_rgba(a:winid) .. s:info.ss[2])
+            call setline('.', s:info.head .. coloredit#generate_paren_rgba(a:winid) .. s:info.tail)
         elseif s:info.type == 'paren_hsl'
-            call setline('.', s:info.ss[0] .. coloredit#generate_paren_hsl(a:winid) .. s:info.ss[2])
+            call setline('.', s:info.head .. coloredit#generate_paren_hsl(a:winid) .. s:info.tail)
+        elseif s:info.type == 'paren_hsla'
+            call setline('.', s:info.head .. coloredit#generate_paren_hsla(a:winid) .. s:info.tail)
         endif
     else
         echohl Error
@@ -374,42 +212,6 @@ function! s:makeline_rgb(x, n) abort
     return printf('%s%s%3d%s%-25s', a:x, s:delimiter, n, s:delimiter, repeat('=', n / 10))
 endfunction
 
-function! s:hsl2rgb(H, S, L) abort
-    if a:L <= 49
-        let max = 2.55 * (a:L + a:L * (1.0 * a:S / 100))
-        let min = 2.55 * (a:L - a:L * (1.0 * a:S / 100))
-    else
-        let max = 2.55 * (a:L + (100 - a:L) * (1.0 * a:S / 100))
-        let min = 2.55 * (a:L - (100 - a:L) * (1.0 * a:S / 100))
-    endif
-    if (0 <= a:H) && (a:H < 60)
-        let R = max
-        let G = (1.0 * a:H / 60) * (max - min) + min
-        let B = min
-    elseif (60 <= a:H) && (a:H < 120)
-        let R = (1.0 * (120 - a:H) / 60) * (max - min) + min
-        let G = max
-        let B = min
-    elseif (120 <= a:H) && (a:H < 180)
-        let R = min
-        let G = max
-        let B = (1.0 * (a:H - 120) / 60) * (max - min) + min
-    elseif (180 <= a:H) && (a:H < 240)
-        let R = min
-        let G = (1.0 * (240 - a:H) / 60) * (max - min) + min
-        let B = max
-    elseif (240 <= a:H) && (a:H < 300)
-        let R = (1.0 * (a:H - 240) / 60) * (max - min) + min
-        let G = min
-        let B = max
-    elseif (300 <= a:H) && (a:H <= 360)
-        let R = max
-        let G = min
-        let B = (1.0 * (360 - a:H) / 60) * (max - min) + min
-    endif
-    return map([R, G, B], { i,x -> float2nr(ceil(x)) })
-endfunction
-
 function! s:makeline_hsl(x, n) abort
     let n = a:n
     if n < 0
@@ -441,10 +243,4 @@ function! s:setline_hsl(bnr, lnum, xs, n) abort
     call setbufline(a:bnr, a:lnum, s:makeline_hsl(a:xs[0], a:n))
 endfunction
 
-"echo s:hsl2rgb(1, 80, 30) == [138, 18, 16]
-"echo s:hsl2rgb(61, 80, 30) == [136, 138, 16]
-"echo s:hsl2rgb(121, 80, 30) == [16, 138, 18]
-"echo s:hsl2rgb(181, 80, 30) == [16, 136, 138]
-"echo s:hsl2rgb(241, 80, 30) == [18, 16, 138]
-"echo s:hsl2rgb(301, 80, 30) == [138, 16, 136]
 
