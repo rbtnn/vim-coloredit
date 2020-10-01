@@ -17,7 +17,7 @@ Also this plugin provides to switch to another display-mode such as RGB and HSL.
 
 * Vim only. Does not support Neovim
 * Vim must be compiled with `+popupwin` or `+textprop` feature
-* 256 bit color
+* 256 colors
 
 ## Concepts
 
