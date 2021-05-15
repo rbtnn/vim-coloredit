@@ -150,7 +150,7 @@ function! coloredit#callback(winid, key) abort
             call setline('.', s:info.head .. coloredit#generate_rgba(a:winid, s:info.is_paren) .. s:info.tail)
         elseif s:info.type == 'hsl'
             if is_rbg
-                let hsl = call('coloredit#converter#rgb2hsl', s:get_3or4values(a:winid)[:2])
+                let hsl = call('coloredit#converter#rgb2hsl_nr', s:get_3or4values(a:winid)[:2])
                 call s:setline_rgb(bnr, 2, 'H', hsl[0])
                 call s:setline_rgb(bnr, 3, 'S', hsl[1])
                 call s:setline_rgb(bnr, 4, 'L', hsl[2])
@@ -158,7 +158,7 @@ function! coloredit#callback(winid, key) abort
             call setline('.', s:info.head .. coloredit#generate_hsl(a:winid, s:info.is_paren) .. s:info.tail)
         elseif s:info.type == 'hsla'
             if is_rbg
-                let hsl = call('coloredit#converter#rgb2hsl', s:get_3or4values(a:winid)[:2])
+                let hsl = call('coloredit#converter#rgb2hsl_nr', s:get_3or4values(a:winid)[:2])
                 call s:setline_rgb(bnr, 2, 'H', hsl[0])
                 call s:setline_rgb(bnr, 3, 'S', hsl[1])
                 call s:setline_rgb(bnr, 4, 'L', hsl[2])
@@ -237,7 +237,7 @@ function! coloredit#filter(winid, key) abort
             call setbufline(bnr, lnum, 'display-mode:RGB -> HSL')
             call coloredit#set_color_on_firstline_rgb(a:winid)
         else
-            let hsl = call('coloredit#converter#rgb2hsl', s:get_3or4values(a:winid)[:2])
+            let hsl = call('coloredit#converter#rgb2hsl_nr', s:get_3or4values(a:winid)[:2])
             call s:setline_hsl(bnr, 2, 'H', hsl[0])
             call s:setline_hsl(bnr, 3, 'S', hsl[1])
             call s:setline_hsl(bnr, 4, 'L', hsl[2])
@@ -289,5 +289,4 @@ endfunction
 function! s:setline_hsl(bnr, lnum, x, n) abort
     call setbufline(a:bnr, a:lnum, s:makeline_hsl(a:x, a:n))
 endfunction
-
 

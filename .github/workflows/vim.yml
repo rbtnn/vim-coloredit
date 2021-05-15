@@ -1,0 +1,19 @@
+name: vim
+
+on: [push]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - uses: rhysd/action-setup-vim@v1
+        with:
+          version: nightly
+      - name: Run unit tests
+        run: |
+          vim --version
+          vim -u NONE -N --noplugin -c "set rtp+=." -c "call coloredit#converter#run_tests()" -c "qa!"
+          if test -f test.log; then exit 1; fi
